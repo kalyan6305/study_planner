@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DeepStudyPlanner | Hackathon Edition</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Outfit', sans-serif; background: #020617; color: #f8fafc; overflow-x: hidden; }
+        .glass { background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(16px); border: 1px solid rgba(255, 255, 255, 0.08); }
+        .gradient-text { background: linear-gradient(135deg, #0ea5e9, #6366f1); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
+        .energy-bar { height: 8px; border-radius: 4px; background: #1e293b; overflow: hidden; }
+        .energy-fill { height: 100%; transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1); }
+        .stat-card { transition: all 0.3s ease; }
+        .stat-card:hover { transform: translateY(-2px); border-color: rgba(14, 165, 233, 0.3); }
+        #logs::-webkit-scrollbar { width: 4px; }
+        #logs::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; }
+    </style>
+</head>
+
+<body class="p-8">
+    <div class="max-w-6xl mx-auto">
+        <!-- Hackathon Header -->
+        <header class="flex justify-between items-end mb-12">
+            <div>
+                <span class="text-xs font-bold tracking-widest text-sky-500 uppercase">OpenEnv Hackathon</span>
+                <h1 class="text-5xl font-black gradient-text">DeepStudyPlanner</h1>
+                <p class="text-slate-500 mt-2">Optimal agentic environment for study simulation.</p>
+            </div>
+            <div class="flex items-center gap-6 glass p-4 rounded-2xl">
+                <div class="text-right">
+                    <p class="text-xs text-slate-500 uppercase font-bold tracking-tighter">Current Hour</p>
+                    <p id="clock" class="text-2xl font-mono text-sky-400">08:00 AM</p>
+                </div>
+                <div class="h-10 w-px bg-slate-800"></div>
+                <div class="text-right">
+                    <p class="text-xs text-slate-500 uppercase font-bold tracking-tighter">Knowledge Level</p>
+                    <p id="knowledge" class="text-2xl font-bold">0.0</p>
+                </div>
+            </div>
+        </header>
+
+        <div class="grid grid-cols-1 lg:grid-cols-4 gap-8">
+            <!-- Sidebar: Stats & Controls -->
+            <div class="lg:col-span-1 space-y-6">
+                <!-- Energy Widget -->
+                <div class="glass p-6 rounded-3xl stat-card">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="font-bold flex items-center gap-2">
+                            <i data-lucide="zap" class="text-yellow-400 w-5 h-5"></i> Energy
+                        </h3>
+                        <span id="energy-text" class="text-sm font-mono text-yellow-400">100%</span>
+                    </div>
+                    <div class="energy-bar">
+                        <div id="energy-fill" class="energy-fill bg-yellow-400" style="width: 100%"></div>
+                    </div>
+                    <p class="text-[10px] text-slate-500 mt-4 leading-relaxed">Fatigue reduces knowledge gain by up to 50%.</p>
+                </div>
+
+                <!-- Environment Controls -->
+                <div class="glass p-6 rounded-3xl">
+                    <h3 class="font-bold mb-4 flex items-center gap-2">
+                        <i data-lucide="cpu" class="text-indigo-400 w-5 h-5"></i> Agent Actions
+                    </h3>
+                    <div class="space-y-2">
+                        <button onclick="step()" id="step-btn" class="w-full py-3 rounded-xl bg-sky-500/10 text-sky-400 text-sm font-bold border border-sky-500/20 hover:bg-sky-500/20 transition-all">Step Environment</button>
+                        <button onclick="reset()" class="w-full py-3 rounded-xl bg-slate-800 text-slate-400 text-sm font-bold border border-slate-700 hover:bg-slate-700 transition-all">Reset Episode</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Main Timeline Area -->
+            <div class="lg:col-span-3 space-y-8">
+                <!-- Task Queue -->
+                <div id="task-queue" class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <!-- Dynamic Task Widgets -->
+                </div>
+
+                <!-- Live Agent Logs -->
+                <div class="glass p-8 rounded-[40px] flex-1 flex flex-col min-h-[400px]">
+                    <div class="flex items-center justify-between mb-8">
+                        <h2 class="text-2xl font-bold flex items-center gap-3">
+                            <i data-lucide="terminal" class="text-emerald-400"></i> Agent Trajectory
+                        </h2>
+                        <span class="px-3 py-1 bg-emerald-500/10 text-emerald-400 text-[10px] font-bold rounded-full uppercase tracking-widest">Live Logs</span>
+                    </div>
+
+                    <div id="logs" class="space-y-4 font-mono text-sm overflow-y-auto max-h-[300px] flex-1">
+                        <!-- Log Entries -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- HACKATHON LOGIC -->
+    <script>
+        // --- DATA & STATE ---
+        let state = {
+            hour: 0,
+            energy: 100,
+            knowledge: 0,
+            done: false,
+            tasks: [
+                { id: 1, title: "Math Exam", hours: 3, deadline: 8, priority: 5, color: "sky", status: "pending" },
+                { id: 2, title: "Physics Lab", hours: 4, deadline: 12, priority: 4, color: "indigo", status: "pending" },
+                { id: 3, title: "React App", hours: 5, deadline: 20, priority: 3, color: "emerald", status: "pending" }
+            ]
+        };
+
+        const logColors = {
+            study: "text-sky-400",
+            break: "text-yellow-400",
+            sleep: "text-indigo-400",
+            missed: "text-red-400",
+            reset: "text-emerald-400"
+        };
+
+        // --- CORE SIMULATION ---
+        function step() {
+            if (state.done) return;
+
+            state.hour++;
+            let actionType = "study";
+            let message = "";
+            let color = "study";
+
+            // Heuristic Agent Intelligence
+            if (state.energy < 40) {
+                actionType = Math.random() > 0.5 ? "break" : "sleep";
+            }
+
+            if (actionType === "study") {
+                const task = state.tasks.find(t => t.status === "pending");
+                if (task) {
+                    const gain = (state.energy / 100) * task.priority;
+                    state.knowledge += gain;
+                    state.energy = Math.max(0, state.energy - 15);
+                    message = `Studying ${task.title}. Gain +${gain.toFixed(1)}`;
+                } else {
+                    message = "Idling... all tasks pending/missed.";
+                    color = "missed";
+                }
+            } else if (actionType === "break") {
+                state.energy = Math.min(100, state.energy + 15);
+                message = "Short rest. Energy recovered.";
+                color = "break";
+            } else if (actionType === "sleep") {
+                state.energy = 100;
+                state.hour += 3;
+                message = "Deep sleep. Energy Refilled.";
+                color = "sleep";
+            }
+
+            // Check Deadlines
+            state.tasks.forEach(t => {
+                if (state.hour > t.deadline && t.status === "pending") {
+                    t.status = "missed";
+                    addLog("missed", `TIMEOUT: ${t.title} lost.`);
+                }
+            });
+
+            if (state.hour >= 24) state.done = true;
+
+            addLog(color, message);
+            updateUI();
+        }
+
+        function reset() {
+            state = {
+                hour: 0,
+                energy: 100,
+                knowledge: 0,
+                done: false,
+                tasks: [
+                    { id: 1, title: "Math Exam", hours: 3, deadline: 8, priority: 5, color: "sky", status: "pending" },
+                    { id: 2, title: "Physics Lab", hours: 4, deadline: 12, priority: 4, color: "indigo", status: "pending" },
+                    { id: 3, title: "React App", hours: 5, deadline: 20, priority: 3, color: "emerald", status: "pending" }
+                ]
+            };
+            const logContainer = document.getElementById('logs');
+            logContainer.innerHTML = "";
+            addLog("reset", "Environment reset. Ready for training.");
+            updateUI();
+        }
+
+        // --- UI SYNC ---
+        function updateUI() {
+            // Clock (08:00 AM base)
+            const h = (8 + state.hour) % 24;
+            const ampm = h >= 12 ? 'PM' : 'AM';
+            const displayH = h % 12 || 12;
+            document.getElementById('clock').innerText = `${displayH.toString().padStart(2, '0')}:00 ${ampm}`;
+
+            // Stats
+            document.getElementById('knowledge').innerText = state.knowledge.toFixed(1);
+            document.getElementById('energy-text').innerText = `${state.energy}%`;
+            document.getElementById('energy-fill').style.width = `${state.energy}%`;
+            
+            // Energy Color Change
+            const fill = document.getElementById('energy-fill');
+            if (state.energy < 30) fill.className = "energy-fill bg-red-500";
+            else if (state.energy < 60) fill.className = "energy-fill bg-yellow-400";
+            else fill.className = "energy-fill bg-emerald-400";
+
+            // Disabled Step
+            document.getElementById('step-btn').disabled = state.done;
+            document.getElementById('step-btn').style.opacity = state.done ? "0.5" : "1";
+
+            // Task Queue
+            const queue = document.getElementById('task-queue');
+            queue.innerHTML = state.tasks.map(t => `
+                <div class="glass p-4 rounded-2xl border-l-4 border-${t.color}-500 transition-all ${t.status === 'missed' ? 'opacity-30' : ''}">
+                    <h4 class="font-bold text-sm ${t.status === 'missed' ? 'line-through' : ''}">${t.title}</h4>
+                    <div class="flex justify-between mt-2">
+                        <span class="text-[10px] text-slate-500">Exp: ${t.hours}h</span>
+                        <span class="text-[10px] text-${t.color}-400 font-bold">${t.status.toUpperCase()}</span>
+                    </div>
+                </div>
+            `).join('');
+
+            lucide.createIcons();
+        }
+
+        function addLog(type, message) {
+            const container = document.getElementById('logs');
+            const h = (8 + state.hour) % 24;
+            const time = `${h.toString().padStart(2, '0')}:00`;
+            
+            const div = document.createElement('div');
+            div.className = "flex gap-4 animate-in fade-in slide-in-from-left-4 duration-500";
+            div.innerHTML = `
+                <span class="text-slate-600">${time}</span>
+                <span class="${logColors[type]} font-bold uppercase w-16">${type}</span>
+                <span class="text-slate-400">${message}</span>
+            `;
+            container.appendChild(div);
+            container.scrollTop = container.scrollHeight;
+        }
+
+        // Initialize
+        updateUI();
+        addLog("reset", "Environment initialized.");
+    </script>
+</body>
+
+</html>

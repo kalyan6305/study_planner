@@ -1,0 +1,5 @@
+name: study-planner-openenv
+version: 0.1.0
+sdk: python
+entrypoint: env.StudyPlannerEnv
+description: An environment for evaluating AI agents on study planning tasks.

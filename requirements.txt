@@ -1,4 +1,7 @@
-openenv
+fastapi
+uvicorn
 pydantic
-asyncio
-datetime
+openai
+pyyaml
+openenv-core>=0.2.0
+

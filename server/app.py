@@ -7,13 +7,11 @@ env = StudyPlannerEnv()
 
 @app.get("/")
 def home():
-    return {"status":"running"}
+    return {"status": "running"}
 
 @app.post("/reset")
 def reset():
-
     obs = env.reset()
-
     return obs.dict()
 
 @app.post("/step")
@@ -30,5 +28,4 @@ def step(action: Action):
 
 @app.get("/state")
 def state():
-
     return env.state().dict()

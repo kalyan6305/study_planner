@@ -1,7 +1,7 @@
 [project]
 name = "study-planner-openenv"
 version = "0.1.0"
-description = "OpenEnv environment"
+
 dependencies = [
   "fastapi",
   "uvicorn",
